@@ -4,12 +4,12 @@
 
 ## 当前目标
 
-已按用户要求为修改版建立项目记忆，准备到另一台电脑上的游戏模组项目试用。先完成交接，再确定远端组织方式。建议为个人 Fork 中的 codex/task-context 分支，但尚未获最终选择、创建或推送。
+已按用户要求为修改版建立项目记忆，准备到另一台电脑上的游戏模组项目试用。先完成交接，再确定远端组织方式。已按建议创建个人公开 Fork `https://github.com/dzolv/aoci-code`，并把 `codex/task-context` 推送到该 Fork。
 
 ## 实现与位置
 
 - 上游：aoci-spec/aoci-code；固定开发基线 26ca23fd94d5b5e3807aa92efad02ec520041c05（当时的 v0.2.0-line，不能称现在最新）。
-- 本地实验分支 codex/task-context；修改仍在工作区，HEAD仍为上述上游提交。现有 origin 指向官方仓库，不能直接向它推送实验改动。
+- 本地实验分支 `codex/task-context` 已提交为 `d5b8940`（feat: add bounded task-context cognition mode）。`origin` 仍指向官方仓库，`fork` 指向个人 Fork；实验分支已推送并跟踪 `fork/codex/task-context`。
 - 第一轮实现可选 task_context 模式：有界地图与源码/索引读取、分页、关系待查、按阅读成本规划完整批次、任务状态和证据判断持久化、漂移失效与恢复。默认完整认知模式保留。
 - 程序 build/aoci-experiment.exe；2026-10-27已测试产物 SHA256：79da98d6231f4d52a7b67951e6b51c998e6604e999a896c1bb448890f9c706d2。尚未替换原安装或接入游戏模组。
 
@@ -30,5 +30,5 @@
 
 ## 知识边界
 
-本轮只新增Anamnesis及其受治理范围排除，保留原实现改动。记忆不代替正式认知。当前没有远端发布、PR、生产部署或游戏模组实测。
+本轮新增Anamnesis及其受治理范围排除，并将实现提交到个人Fork的实验分支。记忆不代替正式认知。当前没有上游PR、生产部署或游戏模组实测；个人Fork分支已可供另一台电脑克隆。
 
