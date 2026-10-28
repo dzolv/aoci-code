@@ -92,6 +92,7 @@ type volumeMaintainResult struct {
 	Sets              volumeMaintainSets           `json:"sets"`
 	DatabasePlan      *dbcognition.Plan            `json:"database_plan,omitempty"`
 	CodePlan          *codebatch.Plan              `json:"code_plan,omitempty"`
+	TaskReading       *codebatch.TaskReadingPlan   `json:"task_reading,omitempty"`
 	Batch             volumeAuthoringBatch         `json:"authoring_batch"`
 	Governance        *volumegovernance.Facts      `json:"governance"`
 	Receipt           cognitionReceipt             `json:"cognition_receipt"`
@@ -189,6 +190,9 @@ func handleVolumeMaintain(root, serviceVersion, requestedScope string, loaded *c
 		// the operator's way out is the answer; issuing it would have the model author
 		// every Entry only for the update to stop, and the same batch come back.
 		result.Status, result.Aligned, result.Result, result.NextAction = autoStatusStopped, false, volumegovernance.ResultBlocked, "resolve_unspellable_directory"
+		if result.Stop.RuleCode == "task_batch_plan_stopped" || result.Stop.RuleCode == "code_batch_plan_stopped" {
+			result.NextAction = result.Stop.SafeNextAction
+		}
 		result.Batch.NextAction = result.NextAction
 	case facts.Result == volumegovernance.ResultEvidenceRequired:
 		result.Status, result.Aligned = autoStatusStopped, false
@@ -290,18 +294,64 @@ func mustVolumeScope(set *cognition.Set) cognition.ScopeView {
 // report, so the plan can never promise more than it issues.
 func buildVolumeCodeCandidates(root string, loaded *cognitionRepoCtx, result *volumeMaintainResult, work volumegovernance.CodeAuthoringWork) {
 	all := codeCandidatesForWork(root, loaded.set, work)
+	if loaded.taskContextID != "" && len(all) != len(work.Targets) {
+		stopCodeTaskPlan(result, fmt.Errorf("task_candidate_sources_incomplete"))
+		return
+	}
 	if len(all) == 0 {
 		return
 	}
-	_, selected := codebatch.SelectWithBudget(all, codeBatchLimit(loaded.cfg), codeCandidateBudget(loaded.cfg, loaded.set, all))
+	wire := codeCandidateBudget(loaded.cfg, loaded.set, all)
+	var task codebatch.TaskOptions
+	var selected []codebatch.Candidate
+	var err error
+	if loaded.taskContextID != "" {
+		wire, task, err = taskCodePlanOptions(root, loaded, all)
+		if err == nil {
+			_, selected, _, err = codebatch.SelectTaskWithBudget(all, codeBatchLimit(loaded.cfg), wire, task)
+		}
+		if err == nil {
+			used := 0
+			for _, candidate := range selected {
+				used += wire.Size(candidate)
+			}
+			if used > wire.Bytes {
+				err = fmt.Errorf("task_candidate_response_exceeds_remaining_budget")
+			}
+		}
+		if err != nil {
+			stopCodeTaskPlan(result, err)
+			return
+		}
+	} else {
+		_, selected = codebatch.SelectWithBudget(all, codeBatchLimit(loaded.cfg), wire)
+	}
 	if fail := firstUnspellableCandidate(root, loaded, selected); fail != nil {
 		result.Stop = fail.GlobalStop
 		return
 	}
-	plan, err := codebatch.BuildPlanWithBudget(root, result.Governance.CompositeIdentity,
-		result.Governance.ManagedScope.PolicyIdentity, result.Governance.Code.Path,
-		result.Governance.Code.SHA256, all, codeBatchLimit(loaded.cfg), codeCandidateBudget(loaded.cfg, loaded.set, all))
+	var plan codebatch.Plan
+	if loaded.taskContextID != "" {
+		var reading codebatch.TaskReadingPlan
+		plan, reading, err = codebatch.BuildTaskPlanWithBudget(root, result.Governance.CompositeIdentity,
+			result.Governance.ManagedScope.PolicyIdentity, result.Governance.Code.Path,
+			result.Governance.Code.SHA256, all, codeBatchLimit(loaded.cfg), wire, task)
+		if err == nil {
+			result.TaskReading = &reading
+		}
+	} else {
+		plan, err = codebatch.BuildPlanWithBudget(root, result.Governance.CompositeIdentity,
+			result.Governance.ManagedScope.PolicyIdentity, result.Governance.Code.Path,
+			result.Governance.Code.SHA256, all, codeBatchLimit(loaded.cfg), wire)
+	}
 	if err != nil {
+		if loaded.taskContextID != "" {
+			stopCodeTaskPlan(result, err)
+		} else {
+			result.Stop = &GlobalStopFacts{AffectedAsset: "code", Field: "batch_plan", RuleCode: "code_batch_plan_stopped",
+				Expected: "complete_current_machine_batch_receipt", Actual: "no_batch_issued", Cause: err.Error(),
+				SafeNextAction: "resolve_code_batch_plan_failure"}
+		}
 		return
 	}
 	result.CodePlan = transportCodePlan(plan)

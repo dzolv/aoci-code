@@ -124,7 +124,8 @@ func newHookCmd() *cobra.Command {
 }
 
 func newCodexCompactCmd(entropy io.Reader) *cobra.Command {
-	return &cobra.Command{
+	var taskContext bool
+	command := &cobra.Command{
 		Use:    "codex-compact",
 		Hidden: true,
 		Args:   cobra.NoArgs,
@@ -132,14 +133,19 @@ func newCodexCompactCmd(entropy io.Reader) *cobra.Command {
 		// gate: it only emits context and must not inspect repository state.
 		PersistentPreRunE: func(*cobra.Command, []string) error { return nil },
 		Run: func(cmd *cobra.Command, _ []string) {
+			eventID := newCodexCompactRefreshEventID(entropy)
+			context := codexCompactDeveloperContext(eventID)
+			if taskContext {
+				context = cliMessage("hook.codex_compact_task_context", eventID, eventID)
+			}
 			_, _ = fmt.Fprintln(
 				cmd.OutOrStdout(),
-				codexCompactDeveloperContext(
-					newCodexCompactRefreshEventID(entropy),
-				),
+				context,
 			)
 		},
 	}
+	command.Flags().BoolVar(&taskContext, "task-context", false, cliMessage("cli.flag.task_context"))
+	return command
 }
 
 func newCodexCompactRefreshEventID(entropy io.Reader) string {

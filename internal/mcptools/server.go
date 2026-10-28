@@ -144,10 +144,11 @@ func (rc *repoCtx) dictionaryText(header string) string {
 }
 
 type cognitionRepoCtx struct {
-	cfg   *config.Config
-	paths config.Paths
-	set   *cognition.Set
-	bl    *baseline.Baseline
+	cfg           *config.Config
+	paths         config.Paths
+	set           *cognition.Set
+	bl            *baseline.Baseline
+	taskContextID string // optional request-local task; never a full-cognition receipt
 }
 
 func (loaded *cognitionRepoCtx) legacyRepo() *repoCtx {
@@ -253,12 +254,21 @@ func localeSafeMCPDetail(detail string) string {
 // RunStdio 启动 stdio MCP server(阻塞至 ctx 取消或对端关闭)。
 // root 在启动时定死(来自 aoci mcp 的工作目录或 --repo);version 经 CLI 注入。
 func RunStdio(ctx context.Context, root, version string) error {
+	return RunStdioWithOptions(ctx, root, version, ServerOptions{})
+}
+
+// ServerOptions enables opt-in behavior without changing existing repositories.
+type ServerOptions struct {
+	TaskContext bool
+}
+
+func RunStdioWithOptions(ctx context.Context, root, version string, options ServerOptions) error {
 	// 记录自身二进制的磁盘身份, 之后治理面用它暴露"磁盘已替换、进程未重启"。
 	// os.Executable 失败时自检静默关闭, 绝不影响服务启动。
 	if executable, err := os.Executable(); err == nil {
 		RecordServiceBinaryIdentity(executable)
 	}
-	srv, err := NewServer(root, version)
+	srv, err := NewServerWithOptions(root, version, options)
 	if err != nil {
 		return err
 	}
@@ -272,6 +282,10 @@ func RunStdio(ctx context.Context, root, version string) error {
 // caller: the tool layer never infers it from Git, PATH, the index, or
 // configuration.
 func NewServer(root, version string) (*mcp.Server, error) {
+	return NewServerWithOptions(root, version, ServerOptions{})
+}
+
+func NewServerWithOptions(root, version string, options ServerOptions) (*mcp.Server, error) {
 	cfg, err := config.Load(root)
 	if err != nil {
 		return nil, err
@@ -293,12 +307,20 @@ func NewServer(root, version string) (*mcp.Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	if options.TaskContext {
+		taskContextDescriptions(descriptions, cfg.Locale)
+		addTaskContextSchema(inputSchemas)
+	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: machinecontract.MCPServerName, Version: version}, nil)
 	srv.AddReceivingMiddleware(
 		overviewSchemaDiagnostics(root, cfg.LedgerEnabled),
 		compactToolListing(advertisedMCPInputSchemas(inputSchemas)),
 	)
 	refreshSession := newCognitionRefreshSession()
+	if options.TaskContext {
+		refreshSession.taskMode = newTaskModeSession()
+		srv.AddReceivingMiddleware(taskContextMeter(root, refreshSession.taskMode))
+	}
 	registerReadTools(srv, root, version, descriptions, inputSchemas, refreshSession)
 	registerWriteTools(srv, root, version, descriptions, inputSchemas, refreshSession)
 	registerRemoveTool(srv, root, descriptions, inputSchemas)

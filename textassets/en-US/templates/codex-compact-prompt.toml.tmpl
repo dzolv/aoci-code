@@ -10,7 +10,11 @@ Include:
 
 Be concise, structured, and focused on helping the next LLM seamlessly continue the work.
 
-AOCI-specific compaction rule:
+AOCI task-mode compaction rule (only when current aoci_rules declares context_mode=task_context):
+- Preserve task_id, current goal, checkpoint identity, pending unknowns, metering gaps, and unfinished write or Recovery state; do not copy bulk map, Entry, or source bodies.
+- Resume through aoci_get_entries task.action=resume with that task_id and the fresh event_id injected by SessionStart(source=compact), then recheck and reread only necessary current evidence. Do not automatically load the Whole-Index. The full-mode AOCI rules below apply only when task_context is not active. An explicitly requested full Overview retains its original transport and proof requirements.
+
+AOCI-specific compaction rule (default full mode):
 - Do not retain, quote, paraphrase, or summarize the AOCI Whole-Index body or any Overview Header, Entry, Chunk, Challenge question or answer, or Attestation answer.
 - For AOCI, retain only the latest cognition_receipt identity, any unfinished write or Recovery state needed to continue safely, and this directive: immediately after compaction, obey the AOCI reload instruction injected by SessionStart(source=compact) before resuming the task.
 """

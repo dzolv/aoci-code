@@ -28,9 +28,11 @@ import (
 
 	"github.com/aoci-spec/aoci-code/internal/baseline"
 	"github.com/aoci-spec/aoci-code/internal/cognition"
+	"github.com/aoci-spec/aoci-code/internal/config"
 	afs "github.com/aoci-spec/aoci-code/internal/fs"
 	"github.com/aoci-spec/aoci-code/internal/index"
 	"github.com/aoci-spec/aoci-code/internal/ledger"
+	"github.com/aoci-spec/aoci-code/internal/taskcontext"
 	"github.com/aoci-spec/aoci-code/textassets"
 )
 
@@ -59,10 +61,11 @@ type overviewIn struct {
 }
 
 type getEntriesIn struct {
-	Paths      []string `json:"paths,omitempty"`
-	Dir        string   `json:"dir,omitempty"`
-	VolumeID   string   `json:"volume_id,omitempty"`
-	ObjectRefs []string `json:"object_refs,omitempty"`
+	Paths      []string             `json:"paths,omitempty"`
+	Dir        string               `json:"dir,omitempty"`
+	VolumeID   string               `json:"volume_id,omitempty"`
+	ObjectRefs []string             `json:"object_refs,omitempty"`
+	Task       *taskcontext.Request `json:"task,omitempty"`
 }
 
 type searchIn struct {
@@ -100,6 +103,13 @@ func registerReadTools(
 			return guard(
 				func() *mcp.CallToolResult {
 					start := time.Now()
+					if refreshSession.taskMode != nil {
+						cfg, err := config.LoadReadOnly(root)
+						if err != nil {
+							return errResult(errBadArgs, err.Error(), "")
+						}
+						return textResult(taskContextRules(cfg.Locale))
+					}
 
 					loaded, fail := loadCognitionCtx(root)
 					if fail != nil {
@@ -348,6 +358,9 @@ func registerReadTools(
 		) {
 			return guard(
 				func() *mcp.CallToolResult {
+					if input.Task != nil {
+						return handleTaskContextRequest(root, input, refreshSession.taskMode, request)
+					}
 					return handleGetEntries(
 						root,
 						mcpServiceVersion,

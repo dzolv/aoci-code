@@ -1,6 +1,7 @@
 # aoci:codex-compact-hook:v1
 # Reload AOCI cognition synchronously after Codex compacts the context.
 # command target: hook codex-compact
+# Task mode requires explicit --task-context on this hook command and on mcp; change configuration only with user authorization.
 [[hooks.SessionStart]]
 matcher = "^compact$"
 

@@ -120,14 +120,14 @@ def host_window_summary(limit=HOST_WINDOW_BYTES):
 
 # ---------------------------------------------------------------- MCP client
 class Session:
-    def __init__(self, repo, capabilities=None, on_request=None):
+    def __init__(self, repo, capabilities=None, on_request=None, mcp_args=None):
         """`capabilities` is what this client declares at initialize; `on_request`
         answers a request the server sends while a call is in flight (the
         elicitation/create of a host dialog), returning its result or None for
         method-not-found."""
         self.repo = repo
         self.on_request = on_request
-        self.p = subprocess.Popen([BIN, "--repo", repo, "mcp"],
+        self.p = subprocess.Popen([BIN, "--repo", repo, "mcp", *(mcp_args or [])],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, encoding="utf-8", bufsize=1)
         self.stderr_capture = BoundedStderr(self.p.stderr)

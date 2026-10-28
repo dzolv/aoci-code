@@ -1,0 +1,123 @@
+AOCI Task Context v1
+====================
+
+Activation and scope
+--------------------
+
+Task context is an explicit service option: `aoci mcp --task-context`.
+The default is off.
+This option neither edits existing Host configuration nor changes team budgets,
+Managed Scope, formal cognition, or approval policy. It adds no MCP tool: the
+existing nine-tool surface remains, with an optional `task` object added to
+the task-mode `aoci_get_entries` input schema. Default schemas are unchanged.
+
+`aoci_rules` identifies `context_mode=task_context`. Its bounded task-reading
+contract governs new Runs and compaction recovery. Complete Overview remains
+available on explicit request and retains its original complete transport,
+continuation, confirmation, and Attestation proof contract. A task map, task
+state, decision, or checkpoint is never complete-system cognition or Apply proof.
+
+Task operations
+---------------
+
+The task actions are start, resume, status, read, search, relations, checkpoint,
+map, and charge. Start requires a goal and returns a task_id; subsequent actions
+use that identity. Resume requires an event_id for the real Host context reset;
+replaying a consumed event does not reset the phase budget. Lack of effective
+evidence or formal Apply progress reduces subsequent reading and can stop loops.
+
+Read a bounded system map, current source for the batch, and necessary one-hop
+relationships. Unknown facts and unresolved relationships remain pending and
+are expanded according to task risk, without requiring a whole-source audit.
+Read kinds source, entry, meta, map, and result support bounded material access.
+Ordinary search, get_entries without task, and Header reads in this mode return
+bounded_read_required and direct the Host to the corresponding task action.
+
+A Host-authored system map is shared across tasks. Missing or stale maps require
+current evidence reads and independent Host semantic authoring, bound through
+map_evidence. Paths, ASTs, regexes, or templates alone must not generate map
+semantics. Reading kind=map refreshes the shared version without resetting the
+phase or budget. Updating a map preserves version and filesystem CAS guards.
+
+Checkpoint adds pending questions and saves a note. To settle selected pending
+questions, resolved[] must name their exact existing text, note must be nonempty,
+and resolution_evidence[] must bind current source/entry/meta ranges actually
+delivered to this task. These are reviewable Host judgments, not machine proof
+of semantic truth. status kind=decisions pages their evidence and validity.
+Evidence or policy drift invalidates affected decisions and reopens their
+questions. Resolving a question adds neither machine progress nor formal Apply
+count. Unselected pending work remains; prose cannot declare a formal Apply.
+
+Persistent state and bounded delivery
+------------------------------------
+
+Task state is stored under `.aoci/task-context/`: per-task state, the shared
+system-map asset, and retained complete tool results. It preserves task identity,
+goal, evidence hashes and ranges, pending questions, decisions, checkpoint,
+phase accounting, and successful formal batch facts across service restarts.
+Changes are serialized and constrained to repository-relative regular paths;
+task assets do not replace Baseline, formal batches, or transaction receipts.
+
+A deferred Maintain result may include a bounded stop_summary only when the
+original response positively proves status=stopped, explicitly empty candidates,
+zero included candidates, absent Code/Database plans, no formal write, and the
+known task_budget_exhausted_before_batch cause. It reports current_batch_issued=false
+and remaining_targets, keeps the complete result_ref, and sets next_action=checkpoint
+with full_result_read_required_for_next_action=false. This exempts only reading
+that diagnostic before checkpointing, never reading a later issued candidate set
+before authoring. Missing fields, unknown causes and nonempty batches do not qualify.
+
+Pages carry next_cursor and remaining facts. Cursors are bound to the current
+material or selected result identity; changed bytes, search selection, or other
+bound inputs invalidate continuation. Reject stale or mismatched cursors instead
+of combining versions or silently skipping results. After compaction, recheck
+identities and reread only invalidated or still-needed material.
+
+Large read-only tool results may return status=output_deferred with task_id,
+result_ref, and bytes. The complete result is retained and read through
+task read kind=result path=result_ref with exact continuation cursors. Before
+formal authoring, the Host must read all candidate-response pages. Pagination
+does not permit slicing a machine-issued batch. Failure to retain a result must
+not fall back to an unbounded read response; formal write replies remain visible.
+
+Metering boundary
+-----------------
+
+Within an active task, service responses and request arguments are accounted
+in serialized bytes. Task reads are bounded by page and phase allowances while
+preserving a control/checkpoint reserve. Already delivered formal write replies
+are recorded even when they exceed the allowance. An explicit complete Overview
+is a global-request exception: retain its full proof transport and account for
+it honestly, even if it exceeds the task budget.
+
+The service cannot cap every Host token or observe arbitrary external tools.
+The Host charges those materials with charge, external_bytes, and note and
+reports missing accounting explicitly. Near the budget, checkpoint safe progress
+before further reading. A fresh phase requires a real Host event, not a fabricated
+event used to obtain another allowance. The allowance is scoped to each task and
+its current phase, not cumulatively to the MCP connection or all Host context.
+A genuinely new objective may start a new task. The Host must continue the same
+unfinished objective with its saved task_id, and must not change task_id or
+repeat start merely to obtain another allowance. This obligation adds no implicit
+new-task approval or connection-wide hard-budget claim. Task budgets are not
+formal batch limits.
+
+Inherited write and Recovery boundaries
+--------------------------------------
+
+With valid repository configuration but no Root index, rules and source-first
+task reading are available. Damaged existing cognition and pending Recovery
+still fail closed for new material. Task state never authorizes Root/Meta,
+migration, global layout, scope changes, or other protected formal writes.
+
+During formal Recovery only checkpoint, status, and charge controls may preserve
+cached progress. Their replies declare verification=cached_unverified and
+state.map_valid=false; cached counts are not claims of current evidence validity.
+Status then permits only summary, pending, and checkpoint views. No new material,
+decision resolution, start/resume, or budget reset is permitted by these controls.
+
+Formal Code updates still submit every candidate in the current machine-issued
+batch, preserving exact batch, candidate, source, and preimage identities. Existing
+validation, CAS, drift, third-party conflict, approval, permissions, and Recovery
+stops remain authoritative. Formal completed-batch facts come only from verified
+successful Apply handlers; task prose or changed index bytes cannot create them.

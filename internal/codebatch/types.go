@@ -1,7 +1,8 @@
 // Package codebatch binds one machine-issued Code authoring batch to the
 // current Volumes cognition and Managed Scope preimages. It owns candidate
-// transport receipts only; it never authors or rewrites Tag or F/R/A/S text,
-// and it never reads or reasons about the relations those entries declare.
+// transport receipts; it never authors or rewrites Tag or F/R/A/S text.
+// Optional task planning uses explicit relation hints only to order candidates,
+// never to infer semantics or relax a formal write validation.
 package codebatch
 
 import "encoding/json"

@@ -1,6 +1,7 @@
 # aoci:codex-compact-hook:v1
 # Codex 压缩上下文后同步重载 AOCI 认知。
 # command target: hook codex-compact
+# 任务模式须在本 hook 命令及 mcp 上显式添加 --task-context；只有获得用户授权才能修改配置。
 [[hooks.SessionStart]]
 matcher = "^compact$"
 

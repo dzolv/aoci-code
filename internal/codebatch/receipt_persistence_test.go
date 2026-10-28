@@ -3,6 +3,7 @@ package codebatch
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -97,6 +98,13 @@ func TestSaveReceiptReportsUnusableStorage(t *testing.T) {
 
 	if os.Geteuid() == 0 {
 		t.Log("running as root; the unwritable-directory case cannot be observed")
+		return
+	}
+	if runtime.GOOS == "windows" {
+		// Chmod's mode bits do not deny directory creation on Windows.
+		// The unusable-file and receipt-directory cases above still run;
+		// POSIX permissions are exercised on the Unix CI targets.
+		t.Log("Windows directory permissions are ACL-based; chmod cannot model this case")
 		return
 	}
 	lockedRoot := t.TempDir()

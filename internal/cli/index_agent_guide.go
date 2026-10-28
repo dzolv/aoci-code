@@ -76,6 +76,7 @@ type agentGuideCommands struct {
 
 type volumeAgentGuide struct {
 	Version           int                        `json:"version"`
+	ContextMode       string                     `json:"context_mode,omitempty"`
 	Agent             string                     `json:"agent"`
 	Mode              string                     `json:"mode"`
 	Stage             string                     `json:"stage"`
@@ -174,6 +175,7 @@ func newIndexAgentGuideCmd() *cobra.Command {
 		"",
 		cliMessage("cli.flag.guide_agent"),
 	)
+	command.Flags().Bool("task-context", false, cliMessage("cli.flag.task_context"))
 
 	return command
 }
@@ -183,6 +185,7 @@ func writeVolumeAgentGuide(cmd *cobra.Command, root string, cfg *config.Config, 
 	if err != nil {
 		return err
 	}
+	applyTaskContextGuide(cmd, guide)
 	if flagJSON {
 		encoder := json.NewEncoder(cmd.OutOrStdout())
 		encoder.SetIndent("", "  ")
@@ -190,7 +193,22 @@ func writeVolumeAgentGuide(cmd *cobra.Command, root string, cfg *config.Config, 
 	}
 	_, err = fmt.Fprint(cmd.OutOrStdout(), cliMessage("guide.volumes_summary",
 		guide.Stage, guide.Complete, guide.NextAction, strings.Join(guide.AffectedDomains, ",")))
+	if err == nil && guide.ContextMode != "" {
+		_, err = fmt.Fprintln(cmd.OutOrStdout(), cliMessage("guide.task_context_instruction"))
+	}
 	return err
+}
+
+// Task reading is orthogonal to governance: keep all assessed stop facts,
+// batch obligations, and next actions intact while naming the reading entry.
+func applyTaskContextGuide(cmd *cobra.Command, guide *volumeAgentGuide) {
+	enabled, _ := cmd.Flags().GetBool("task-context")
+	if !enabled {
+		return
+	}
+	guide.ContextMode = "task_context"
+	guide.Commands.Guide += " --task-context"
+	guide.Instructions = append([]string{cliMessage("guide.task_context_instruction")}, guide.Instructions...)
 }
 
 // buildVolumeAgentGuide is the one place a Volumes Guide is assembled. The
@@ -396,10 +414,16 @@ func writeVolumeMetaBlockedGuide(cmd *cobra.Command, agent string, stop *volumeG
 		AffectedDomains: []string{cognition.ScopeMeta}, Findings: []volumegovernance.Finding{},
 		Instructions: []string{stop.SafeNextAction}, Commands: agentGuideCommands{Guide: "aoci index agent guide --agent " + agent + " --json"}, Stop: stop,
 	}
+	applyTaskContextGuide(cmd, &guide)
 	if flagJSON {
 		encoder := json.NewEncoder(cmd.OutOrStdout())
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(guide)
+	}
+	if guide.ContextMode != "" {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), cliMessage("guide.task_context_instruction")); err != nil {
+			return err
+		}
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), stop.SafeNextAction)
 	return err
@@ -451,6 +475,7 @@ func writeLegacyReadOnlyGuide(cmd *cobra.Command, root, agent string) error {
 	if err := finalizeVolumeAgentGuideRuntimeContract(guide); err != nil {
 		return &ExitError{Code: ExitInternal, Err: err}
 	}
+	applyTaskContextGuide(cmd, guide)
 	if flagJSON {
 		encoder := json.NewEncoder(cmd.OutOrStdout())
 		encoder.SetIndent("", "  ")
@@ -460,6 +485,11 @@ func writeLegacyReadOnlyGuide(cmd *cobra.Command, root, agent string) error {
 		guide.Stage, guide.Complete, guide.NextAction, strings.Join(guide.AffectedDomains, ",")))
 	if err != nil {
 		return err
+	}
+	if guide.ContextMode != "" {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), cliMessage("guide.task_context_instruction")); err != nil {
+			return err
+		}
 	}
 	_, err = fmt.Fprintln(cmd.OutOrStdout(), cliMessage("guide.legacy_read_only.message"))
 	return err

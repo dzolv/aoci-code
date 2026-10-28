@@ -61,7 +61,7 @@ func registerMaintainTool(
 					if input.Intent == machinecontract.MaintainIntentHumanApproval {
 						return handleHumanApproval(ctx, request.Session, root, input)
 					}
-					return handleMaintainInput(root, mcpServiceVersion, input, refreshSession)
+					return handleMaintainInput(root, mcpServiceVersion, input, refreshSession, taskIDFromContext(ctx))
 				},
 			)
 

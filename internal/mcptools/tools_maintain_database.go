@@ -40,7 +40,7 @@ type databaseMaintainResult struct {
 	NextAction        string                 `json:"next_action"`
 }
 
-func handleMaintainInput(root, mcpServiceVersion string, input maintainIn, refreshSession *cognitionRefreshSession) *mcp.CallToolResult {
+func handleMaintainInput(root, mcpServiceVersion string, input maintainIn, refreshSession *cognitionRefreshSession, taskIDs ...string) *mcp.CallToolResult {
 	// human_approval opens a host dialog, so it is served where the MCP
 	// session is in hand (registerMaintainTool); reaching here means there is
 	// no session to ask through.
@@ -51,6 +51,9 @@ func handleMaintainInput(root, mcpServiceVersion string, input maintainIn, refre
 		return failResult(&Fail{Code: errBadArgs, Msg: "maintain_approval_request_requires_human_approval"})
 	}
 	loaded, fail := loadCognitionCtx(root)
+	if fail == nil && len(taskIDs) > 0 {
+		loaded.taskContextID = taskIDs[0]
+	}
 	if input.Intent != "" {
 		if input.Intent != maintainIntentCognitionOptimization {
 			return failResult(&Fail{Code: errBadArgs, Msg: "maintain_intent_invalid"})

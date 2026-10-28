@@ -10,7 +10,11 @@ Include:
 
 Be concise, structured, and focused on helping the next LLM seamlessly continue the work.
 
-AOCI专用压缩规则：
+AOCI 任务模式压缩规则（仅当当前 aoci_rules 声明 context_mode=task_context）：
+- 保留 task_id、当前目标、checkpoint 身份、未知待查项、计量缺口以及未完成写入或 Recovery 状态；不要复制整批地图、Entry 或源码正文。
+- 用该 task_id 和 SessionStart(source=compact) 注入的新的 event_id 调用 aoci_get_entries task.action=resume；重新核对并只补读必要的当前证据，不自动加载 Whole-Index。下述全量模式规则仅在 task_context 未启用时适用；显式请求完整 Overview 仍保留原完整传输与证明要求。
+
+AOCI专用压缩规则（默认全量模式）：
 - 不得在交接摘要中保留、引用、转述或概括AOCI Whole-Index正文，也不得保留、引用、转述或概括任何Overview Header、Entry、Chunk、Challenge问题或答案、Attestation答案。
 - 对AOCI只保留最新cognition_receipt身份、安全续接所需的未完成write或Recovery状态，以及这一条指令：压缩后先立即执行SessionStart(source=compact)注入的AOCI重载指令，再恢复任务。
 """

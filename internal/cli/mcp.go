@@ -17,6 +17,11 @@ import (
 )
 
 func init() {
+	registerCommand(newMCPCmd())
+}
+
+func newMCPCmd() *cobra.Command {
+	var taskContext bool
 	cmd := &cobra.Command{
 		Use:   "mcp",
 		Short: cliMessage("cli.short.mcp"),
@@ -29,11 +34,12 @@ func init() {
 			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			if err := mcptools.RunStdio(ctx, root, version); err != nil && ctx.Err() == nil {
+			if err := mcptools.RunStdioWithOptions(ctx, root, version, mcptools.ServerOptions{TaskContext: taskContext}); err != nil && ctx.Err() == nil {
 				return err // 非信号退出的错误按内部错误处理
 			}
 			return nil
 		},
 	}
-	registerCommand(cmd)
+	cmd.Flags().BoolVar(&taskContext, "task-context", false, cliMessage("cli.flag.task_context"))
+	return cmd
 }

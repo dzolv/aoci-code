@@ -537,6 +537,18 @@
         "created_by": "codex-public-bootstrap",
         "order": 1100,
         "enabled": true
+      },
+      {
+        "rule_id": "experiment-anamnesis-exclude",
+        "action": "exclude",
+        "pattern": ".anamnesis/**",
+        "pattern_kind": "glob",
+        "reason": "User-authorized project memory records experiment intent and handoff; it is not repository code cognition and must not recursively enter Whole-Index.",
+        "decision_basis": "semantic_density",
+        "source": "user",
+        "created_by": "codex-task-context",
+        "order": 1200,
+        "enabled": true
       }
     ]
   },

@@ -22,6 +22,7 @@ import (
 type cognitionRefreshSession struct {
 	mu         sync.Mutex
 	deliveries *volumeDeliveryStore
+	taskMode   *taskModeSession
 
 	established    bool
 	generation     int

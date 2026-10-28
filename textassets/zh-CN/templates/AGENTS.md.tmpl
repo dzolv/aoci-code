@@ -31,6 +31,10 @@ Entry 的语义必须来自模型对真实证据的理解。不得仅依据路�
 
 本区块只规定仓库接入、认知使用和收尾原则。`aoci_rules` 承载当前会话合同，Guide实时输出承载当前Plan的执行顺序与停点，工具Schema、Spec和Validator承载机器结构与判据；Prompt、Description、README和静态文档不能覆盖这些机器事实。
 
+### 当前读取模式
+
+先调用 `aoci_rules` 确认当前服务模式。若声明 `context_mode=task_context`，新 Run 与压缩恢复均以任务合同为准：从 `aoci_get_entries` 的 `task.action=start` 与 `goal` 开始，或携带保存的 `task_id`、新的 `event_id` 进行 `task.action=resume`。读取有界系统地图、当前源码与必要关联；地图缺失时先读取真实证据，再由 Host 创作语义。未知项保留待查，接近任务预算先 checkpoint；任务状态不等于完整系统认知。下一节中的自动完整认知加载与压缩重载要求只适用于默认全量模式；任务模式显式请求 Overview 时仍完整遵守其交付与证明要求。下文的正式创作、完整批次、CAS、Recovery、批准、Root/Meta、迁移和全局布局边界均保留。模式必须由服务显式选择（`aoci mcp --task-context`），不得从任务摘要推断或静默启用。
+
 ### 建立、生成和恢复认知
 
 1. 每个新的 Agent Run 开始时，应先判断：
